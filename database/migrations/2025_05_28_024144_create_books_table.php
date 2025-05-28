@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('author');
             $table->year('published_year');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

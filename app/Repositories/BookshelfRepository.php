@@ -4,40 +4,60 @@ namespace App\Repositories;
 
 use App\Models\Bookshelf;
 use App\Interfaces\BookshelfRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class BookshelfRepository implements BookshelfRepositoryInterface
 {
     /**
+     * Bookshelf model instance.
+     *
+     * @var Bookshelf
+     */
+    protected $model;
+
+    /**
+     * BookshelfRepository constructor.
+     *
+     * @param Bookshelf $bookshelf
+     */
+    public function __construct(Bookshelf $bookshelf)
+    {
+        $this->model = $bookshelf;
+    }
+
+    /**
      * Get all bookshelves with pagination.
      *
      * @param int $perPage
-     * @return mixed
+     * @return LengthAwarePaginator
      */
-    public function getAllBookshelves(int $perPage = 10): object
+    public function getAllBookshelves(int $perPage = 10): LengthAwarePaginator
     {
-        return Bookshelf::paginate($perPage);
+        return $this->model->newQuery()->paginate($perPage);
     }
 
     /**
      * Create a new bookshelf.
      *
      * @param array $data
-     * @return mixed
+     * @return Bookshelf
      */
     public function createBookshelf(array $data): Bookshelf
     {
-        return Bookshelf::create($data);
+        return $this->model->create($data);
     }
 
     /**
      * Get a specific bookshelf by ID.
      *
      * @param int $id
-     * @return mixed
+     * @return Bookshelf
+     * @throws ModelNotFoundException
      */
     public function getBookshelfById(int $id): Bookshelf
     {
-        return Bookshelf::findOrFail($id);
+        return $this->model->findOrFail($id);
     }
 
     /**
@@ -45,25 +65,29 @@ class BookshelfRepository implements BookshelfRepositoryInterface
      *
      * @param int $id
      * @param array $data
-     * @return mixed
+     * @return Bookshelf
+     * @throws ModelNotFoundException
      */
     public function updateBookshelf(int $id, array $data): Bookshelf
     {
-        $bookshelf = Bookshelf::findOrFail($id);
+        $bookshelf = $this->model->findOrFail($id);
         $bookshelf->update($data);
-        return $bookshelf;
+
+        return $bookshelf->fresh();
     }
 
     /**
      * Delete a bookshelf by ID.
      *
      * @param int $id
-     * @return mixed
+     * @return Bookshelf
+     * @throws ModelNotFoundException
      */
     public function deleteBookshelf(int $id): Bookshelf
     {
-        $bookshelf = Bookshelf::findOrFail($id);
+        $bookshelf = $this->model->findOrFail($id);
         $bookshelf->delete();
+
         return $bookshelf;
     }
 }

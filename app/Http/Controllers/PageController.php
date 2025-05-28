@@ -9,6 +9,7 @@ use App\Http\Requests\StorePageRequest;
 use App\Http\Requests\UpdatePageRequest;
 use Symfony\Component\HttpFoundation\Response;
 use App\Interfaces\PageRepositoryInterface;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class PageController extends Controller
@@ -21,12 +22,12 @@ class PageController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): ResourceCollection
     {
         $chapterId = $request->input("chapter_id");
         $pages = $this->pageRepository->getAllPagesByChapterId($chapterId);
 
-        return response()->json(PageResource::collection($pages));
+        return PageResource::collection($pages);
     }
 
     /**
@@ -45,7 +46,6 @@ class PageController extends Controller
      */
     public function show(Page $page)
     {
-        // The route model binding already fetches the page, so we just return it
         return new PageResource($page->load("chapter"));
     }
 
@@ -54,7 +54,6 @@ class PageController extends Controller
      */
     public function update(UpdatePageRequest $request, Page $page): JsonResponse
     {
-        // Check for duplicate page number if it's being changed is handled in the repository
         $updatedPage = $this->pageRepository->updatePage($page->id, $request->validated());
 
         return response()->json(new PageResource($updatedPage->load("chapter")));
@@ -66,6 +65,7 @@ class PageController extends Controller
     public function destroy(Page $page): JsonResponse
     {
         $this->pageRepository->deletePage($page->id);
+        
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 }

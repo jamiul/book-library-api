@@ -12,29 +12,18 @@ use App\Interfaces\BookshelfRepositoryInterface;
 
 class BookshelfController extends Controller
 {
-    private BookshelfRepositoryInterface $bookshelfRepository;
-
-    public function __construct(BookshelfRepositoryInterface $bookshelfRepository)
-    {
-        $this->bookshelfRepository = $bookshelfRepository;
-    }
+    public function __construct(
+        private readonly BookshelfRepositoryInterface $bookshelfRepository
+    ) {}
 
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index()
     {
         $bookshelves = $this->bookshelfRepository->getAllBookshelves(10);
 
-        return response()->json([
-            'data' => BookshelfResource::collection($bookshelves->items()),
-            'meta' => [
-                'current_page' => $bookshelves->currentPage(),
-                'last_page' => $bookshelves->lastPage(),
-                'per_page' => $bookshelves->perPage(),
-                'total' => $bookshelves->total(),
-            ],
-        ]);
+        return BookshelfResource::collection($bookshelves);
     }
 
     /**
@@ -44,18 +33,18 @@ class BookshelfController extends Controller
     {
         $bookshelf = $this->bookshelfRepository->createBookshelf($request->validated());
 
-        return response()->json(new BookshelfResource($bookshelf), Response::HTTP_CREATED);
+        return $this->successResponse(
+            new BookshelfResource($bookshelf),
+            Response::HTTP_CREATED
+        );
     }
-
 
     /**
      * Display the specified resource.
      */
     public function show(Bookshelf $bookshelf): JsonResponse
     {
-        $bookshelf = $this->bookshelfRepository->getBookshelfById($bookshelf->id);
-
-        return response()->json(new BookshelfResource($bookshelf));
+        return $this->successResponse(new BookshelfResource($bookshelf));
     }
 
     /**
@@ -63,11 +52,13 @@ class BookshelfController extends Controller
      */
     public function update(UpdateBookshelfRequest $request, Bookshelf $bookshelf): JsonResponse
     {
-        $bookshelf = $this->bookshelfRepository->updateBookshelf($bookshelf->id, $request->validated());
+        $updatedBookshelf = $this->bookshelfRepository->updateBookshelf(
+            $bookshelf->id,
+            $request->validated()
+        );
 
-        return response()->json(new BookshelfResource($bookshelf), Response::HTTP_OK);
+        return $this->successResponse(new BookshelfResource($updatedBookshelf));
     }
-
 
     /**
      * Remove the specified resource from storage.
@@ -77,5 +68,13 @@ class BookshelfController extends Controller
         $this->bookshelfRepository->deleteBookshelf($bookshelf->id);
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Create a standardized success response.
+     */
+    private function successResponse($data, int $statusCode = Response::HTTP_OK): JsonResponse
+    {
+        return response()->json($data, $statusCode);
     }
 }

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId("chapter_id")->constrained()->onDelete("cascade");
             $table->integer("page_number");
             $table->text("content");
+            $table->softDeletes();
             $table->timestamps();
         });
     }

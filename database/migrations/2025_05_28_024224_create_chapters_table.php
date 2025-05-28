@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId("book_id")->constrained()->onDelete("cascade");
             $table->string("title");
             $table->integer("chapter_number");
+            $table->softDeletes();
             $table->timestamps();
         });
     }

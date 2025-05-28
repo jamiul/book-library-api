@@ -105,6 +105,10 @@ pages)
     *   `updated_at` (Timestamp)
     *   *Relationship:* Belongs to a Chapter
 
+### Database Diagram
+![Library Diagram](database\data\library-diagram.png)
+
+
 ### API Endpoints
 
 (Refer to `routes/api.php` for a full list of endpoints and their corresponding controllers/methods.)
