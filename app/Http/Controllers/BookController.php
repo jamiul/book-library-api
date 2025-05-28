@@ -2,91 +2,100 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Book;
 use Illuminate\Http\Request;
+use App\Http\Resources\BookResource;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\SearchBookRequest;
 use App\Http\Requests\UpdateBookRequest;
+use App\Interfaces\BookRepositoryInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class BookController extends Controller
 {
+    private const DEFAULT_PER_PAGE = 10;
+
+    public function __construct(
+        private BookRepositoryInterface $bookRepository
+    ) {}
+
     /**
-     * Display a listing of the resource.
+     * Display a paginated list of books.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): ResourceCollection
     {
-        $query = Book::query();
+        $books = $this->bookRepository->getAllBooks(
+            $this->getPerPage($request)
+        );
 
-        if ($request->has("bookshelf_id")) {
-            $query->where("bookshelf_id", $request->input("bookshelf_id"));
-        }
-
-        $books = $query->with("bookshelf")->get();
-        return response()->json($books);
+        return BookResource::collection($books);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created book in storage.
      */
-    public function store(StoreBookRequest $request): JsonResponse
+    public function store(StoreBookRequest $request): BookResource
     {
-        $book = Book::create($request->validated());
-        return response()->json($book, Response::HTTP_CREATED);
+        $book = $this->bookRepository->createBook($request->validated());
+
+        return new BookResource($book);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified book.
      */
-    public function show(Book $book): JsonResponse
+    public function show(int $id): BookResource
     {
-         return response()->json($book->load("bookshelf"));
+        return new BookResource(
+            $this->bookRepository->getBookById($id)->load("bookshelf")
+        );
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified book in storage.
      */
-    public function update(UpdateBookRequest $request, Book $book)
+    public function update(UpdateBookRequest $request, int $id): BookResource
     {
-        $book->update($request->validated());
+        $book = $this->bookRepository->updateBook($id, $request->validated());
 
-        return response()->json($book->load("bookshelf"));
+        return new BookResource($book->load("bookshelf"));
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified book from storage.
      */
-    public function destroy(Book $book): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        $book->delete();
+        $this->bookRepository->deleteBook($id);
+
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
     /**
      * Search for books by title or author.
      */
-    public function search(SearchBookRequest $request): JsonResponse
+    public function search(SearchBookRequest $request): ResourceCollection
     {
-        $title = $request->query("title");
-        $author = $request->query("author");
+        $query = $request->query("query");
 
-        if (!$title && !$author) {
-            return response()->json(["message" => "Please provide a title or author to search for."], Response::HTTP_BAD_REQUEST);
+        if (empty($query)) {
+            return BookResource::collection([]);
         }
 
-        $query = Book::query();
+        $books = $this->bookRepository->searchByTitleOrAuthor(
+            $query,
+            $this->getPerPage($request)
+        );
 
-        if ($title) {
-            $query->where("title", "like", "%" . $title . "%");
-        }
+        return BookResource::collection($books);
+    }
 
-        if ($author) {
-            $query->where("author", "like", "%" . $author . "%");
-        }
-
-        $books = $query->with("bookshelf")->get();
-
-        return response()->json($books);
+    /**
+     * Get the per_page parameter from request or use default.
+     */
+    private function getPerPage(Request $request): int
+    {
+        return $request->query('per_page', self::DEFAULT_PER_PAGE);
     }
 }

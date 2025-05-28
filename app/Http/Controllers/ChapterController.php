@@ -7,35 +7,44 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreChapterRequest;
 use App\Http\Requests\UpdateChapterRequest;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Http\Resources\ChapterResource;
+use App\Interfaces\ChapterRepositoryInterface;
+use Illuminate\Http\Resources\Json\ResourceCollection;
+use Illuminate\Http\JsonResponse;
 
 class ChapterController extends Controller
 {
+    public function __construct(
+        private readonly ChapterRepositoryInterface $chapterRepository
+    ) {
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): ResourceCollection
     {
-        $query = Chapter::query();
+        $perPage = $request->input('per_page', 10);
 
-        // Optional filtering by book_id
-        if ($request->has("book_id")) {
-            $query->where("book_id", $request->input("book_id"));
-        }
+        $chapters = $this->chapterRepository->getPaginatedChapters(
+            $request->input('book_id'),
+            $perPage
+        );
 
-        $chapters = $query->with("book")->get();
-        return response()->json(ChapterResource::collection($chapters));
+        return ChapterResource::collection($chapters);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreChapterRequest $request)
+    public function store(StoreChapterRequest $request): JsonResponse
     {
-        $chapter = Chapter::create($request->validated());
+        $chapter = $this->chapterRepository->createChapter($request->validated());
 
-        return response()->json(new ChapterResource($chapter->load("book")), Response::HTTP_CREATED);
+        return response()->json(
+            new ChapterResource($chapter->load('book')),
+            Response::HTTP_CREATED
+        );
     }
 
     /**
@@ -43,7 +52,9 @@ class ChapterController extends Controller
      */
     public function show(Chapter $chapter): JsonResponse
     {
-         return response()->json(new ChapterResource($chapter->load("book")));
+        return response()->json(
+            new ChapterResource($chapter->load('book'))
+        );
     }
 
     /**
@@ -51,9 +62,13 @@ class ChapterController extends Controller
      */
     public function update(UpdateChapterRequest $request, Chapter $chapter): JsonResponse
     {
-        $chapter->update($request->validated());
+        $this->chapterRepository->updateChapter($chapter->id, $request->validated());
 
-        return response()->json(new ChapterResource($chapter->load("book")));
+        return response()->json(
+            new ChapterResource(
+                $this->chapterRepository->getChapterById($chapter->id)->load('book')
+            )
+        );
     }
 
     /**
@@ -61,7 +76,7 @@ class ChapterController extends Controller
      */
     public function destroy(Chapter $chapter): JsonResponse
     {
-        $chapter->delete();
+        $this->chapterRepository->deleteChapter($chapter->id);
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
@@ -71,12 +86,8 @@ class ChapterController extends Controller
      */
     public function getContent(Chapter $chapter): JsonResponse
     {
-        $chapter->load(["pages" => function ($query) {
-            $query->orderBy("page_number", "asc");
-        }]);
-
-        $fullContent = $chapter->pages->pluck("content")->implode("\n\n");
-
-        return response()->json(["content" => $fullContent]);
+        return response()->json([
+            'content' => $this->chapterRepository->getChapterContent($chapter->id)
+        ]);
     }
 }

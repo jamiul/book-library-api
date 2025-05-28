@@ -8,23 +8,23 @@ use App\Http\Resources\PageResource;
 use App\Http\Requests\StorePageRequest;
 use App\Http\Requests\UpdatePageRequest;
 use Symfony\Component\HttpFoundation\Response;
+use App\Interfaces\PageRepositoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class PageController extends Controller
 {
+
+    public function __construct(
+        private readonly PageRepositoryInterface $pageRepository
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Page::query();
-
-        // Optional filtering by chapter_id
-        if ($request->has("chapter_id")) {
-            $query->where("chapter_id", $request->input("chapter_id"));
-        }
-
-        $pages = $query->with("chapter")->orderBy("page_number", "asc")->get();
+        $chapterId = $request->input("chapter_id");
+        $pages = $this->pageRepository->getAllPagesByChapterId($chapterId);
 
         return response()->json(PageResource::collection($pages));
     }
@@ -34,16 +34,8 @@ class PageController extends Controller
      */
     public function store(StorePageRequest $request): JsonResponse
     {
-        // Check for duplicate page number within the same chapter
-        $exists = Page::where("chapter_id", $request->input("chapter_id"))
-            ->where("page_number", $request->input("page_number"))
-            ->exists();
-
-        if ($exists) {
-            return response()->json(["page_number" => ["The page number already exists for this chapter."]], 422);
-        }
-
-        $page = Page::create($request->validated());
+        // Check for duplicate page number within the same chapter is handled in the repository
+        $page = $this->pageRepository->createPage($request->validated());
 
         return (new PageResource($page->load("chapter")))->response()->setStatusCode(201);
     }
@@ -53,6 +45,7 @@ class PageController extends Controller
      */
     public function show(Page $page)
     {
+        // The route model binding already fetches the page, so we just return it
         return new PageResource($page->load("chapter"));
     }
 
@@ -61,22 +54,10 @@ class PageController extends Controller
      */
     public function update(UpdatePageRequest $request, Page $page): JsonResponse
     {
-        // Check for duplicate page number if it's being changed
-        if ($request->has("page_number") && $request->input("page_number") !== $page->page_number) {
-            $chapterId = $request->input("chapter_id", $page->chapter_id);
-            $exists = Page::where("chapter_id", $chapterId)
-                ->where("page_number", $request->input("page_number"))
-                ->where("id", "!=", $page->id) // Exclude the current page
-                ->exists();
+        // Check for duplicate page number if it's being changed is handled in the repository
+        $updatedPage = $this->pageRepository->updatePage($page->id, $request->validated());
 
-            if ($exists) {
-                return response()->json(["page_number" => ["The page number already exists for this chapter."]], 422);
-            }
-        }
-
-        $page->update($request->validated());
-
-        return response()->json(new PageResource($page->load("chapter")));
+        return response()->json(new PageResource($updatedPage->load("chapter")));
     }
 
     /**
@@ -84,7 +65,7 @@ class PageController extends Controller
      */
     public function destroy(Page $page): JsonResponse
     {
-        $page->delete();
+        $this->pageRepository->deletePage($page->id);
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 }

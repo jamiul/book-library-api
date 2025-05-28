@@ -8,15 +8,24 @@ use App\Http\Requests\StoreBookshelfRequest;
 use App\Http\Requests\UpdateBookshelfRequest;
 use Symfony\Component\HttpFoundation\Response;
 use App\Http\Resources\BookshelfResource;
+use App\Interfaces\BookshelfRepositoryInterface;
 
 class BookshelfController extends Controller
 {
+    private BookshelfRepositoryInterface $bookshelfRepository;
+
+    public function __construct(BookshelfRepositoryInterface $bookshelfRepository)
+    {
+        $this->bookshelfRepository = $bookshelfRepository;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(): JsonResponse
     {
-        $bookshelves = Bookshelf::paginate(10);
+        $bookshelves = $this->bookshelfRepository->getAllBookshelves(10);
+
         return response()->json([
             'data' => BookshelfResource::collection($bookshelves->items()),
             'meta' => [
@@ -33,7 +42,8 @@ class BookshelfController extends Controller
      */
     public function store(StoreBookshelfRequest $request): JsonResponse
     {
-        $bookshelf = Bookshelf::create($request->validated());
+        $bookshelf = $this->bookshelfRepository->createBookshelf($request->validated());
+
         return response()->json(new BookshelfResource($bookshelf), Response::HTTP_CREATED);
     }
 
@@ -43,6 +53,8 @@ class BookshelfController extends Controller
      */
     public function show(Bookshelf $bookshelf): JsonResponse
     {
+        $bookshelf = $this->bookshelfRepository->getBookshelfById($bookshelf->id);
+
         return response()->json(new BookshelfResource($bookshelf));
     }
 
@@ -51,7 +63,8 @@ class BookshelfController extends Controller
      */
     public function update(UpdateBookshelfRequest $request, Bookshelf $bookshelf): JsonResponse
     {
-        $bookshelf->update($request->validated());
+        $bookshelf = $this->bookshelfRepository->updateBookshelf($bookshelf->id, $request->validated());
+
         return response()->json(new BookshelfResource($bookshelf), Response::HTTP_OK);
     }
 
@@ -61,7 +74,8 @@ class BookshelfController extends Controller
      */
     public function destroy(Bookshelf $bookshelf): JsonResponse
     {
-        $bookshelf->delete();
+        $this->bookshelfRepository->deleteBookshelf($bookshelf->id);
+
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 }
