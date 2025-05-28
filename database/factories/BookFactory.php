@@ -17,7 +17,10 @@ class BookFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'bookshelf_id' => 1, // You can update this in seeder for relations
+            'title' => $this->faker->sentence(3),
+            'author' => $this->faker->name,
+            'published_year' => $this->faker->year,
         ];
     }
 }

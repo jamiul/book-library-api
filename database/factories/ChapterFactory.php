@@ -17,7 +17,9 @@ class ChapterFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'book_id' => 1, // You can update this in seeder for relations
+            'title' => $this->faker->sentence(4),
+            'chapter_number' => $this->faker->numberBetween(1, 20),
         ];
     }
 }

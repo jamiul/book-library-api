@@ -17,7 +17,8 @@ class BookshelfFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => $this->faker->company . ' Bookshelf',
+            'location' => $this->faker->city,
         ];
     }
 }

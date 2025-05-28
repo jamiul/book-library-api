@@ -12,6 +12,10 @@ class ChapterSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $bookIds = \App\Models\Book::pluck('id')->all();
+        \App\Models\Chapter::factory(40)->make()->each(function ($chapter) use ($bookIds) {
+            $chapter->book_id = fake()->randomElement($bookIds);
+            $chapter->save();
+        });
     }
 }

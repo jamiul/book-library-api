@@ -17,7 +17,9 @@ class PageFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'chapter_id' => 1, // You can update this in seeder for relations
+            'page_number' => $this->faker->numberBetween(1, 50),
+            'content' => $this->faker->paragraphs(3, true),
         ];
     }
 }

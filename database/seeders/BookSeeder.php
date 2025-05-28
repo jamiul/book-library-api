@@ -12,6 +12,10 @@ class BookSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        $bookshelfIds = \App\Models\Bookshelf::pluck('id')->all();
+        \App\Models\Book::factory(20)->make()->each(function ($book) use ($bookshelfIds) {
+            $book->bookshelf_id = fake()->randomElement($bookshelfIds);
+            $book->save();
+        });
     }
 }

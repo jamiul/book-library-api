@@ -12,6 +12,6 @@ class BookshelfSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        \App\Models\Bookshelf::factory(10)->create();
     }
 }
