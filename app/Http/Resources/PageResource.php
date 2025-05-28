@@ -14,6 +14,14 @@ class PageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'chapter_id' => $this->chapter_id,
+            'page_number' => $this->page_number,
+            'content' => $this->content,
+            'chapter' => new ChapterResource($this->whenLoaded('chapter')),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

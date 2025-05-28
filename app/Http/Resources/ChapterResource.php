@@ -14,6 +14,14 @@ class ChapterResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'book_id' => $this->book_id,
+            'title' => $this->title,
+            'chapter_number' => $this->chapter_number,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'book' => new BookResource($this->whenLoaded('book')),
+        ];
     }
 }

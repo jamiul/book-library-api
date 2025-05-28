@@ -11,7 +11,7 @@ class StoreChapterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class StoreChapterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "book_id" => "required|exists:books,id",
+            "title" => "required|string|max:255",
+            "chapter_number" => "required|integer|min:1",
         ];
     }
 }

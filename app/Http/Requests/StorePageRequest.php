@@ -11,7 +11,7 @@ class StorePageRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class StorePageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "chapter_id" => "required|exists:chapters,id",
+            "page_number" => "required|integer|min:1",
+            "content" => "required|string",
         ];
     }
 }

@@ -3,8 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\BookshelfController;
 
 Route::post('/register', [UserController::class, 'register'])
@@ -28,4 +30,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('books/search', [BookController::class, 'search'])
         ->name('books.search');
     Route::apiResource('books', BookController::class);
+
+    // Chapter CRUD & Content
+    Route::get("chapters/{chapter}/content", [ChapterController::class, "getContent"]);
+    Route::apiResource("chapters", ChapterController::class);
+
+    // Page CRUD
+    Route::apiResource("pages", PageController::class);
 });

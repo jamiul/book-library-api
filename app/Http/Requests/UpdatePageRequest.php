@@ -11,7 +11,7 @@ class UpdatePageRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class UpdatePageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "chapter_id" => "sometimes|required|exists:chapters,id",
+            "page_number" => "sometimes|required|integer|min:1",
+            "content" => "sometimes|required|string",
         ];
     }
 }

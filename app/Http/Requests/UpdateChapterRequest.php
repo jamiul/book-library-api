@@ -11,7 +11,7 @@ class UpdateChapterRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class UpdateChapterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            "book_id" => "sometimes|required|exists:books,id",
+            "title" => "sometimes|required|string|max:255",
+            "chapter_number" => "sometimes|required|integer|min:1",
         ];
     }
 }
