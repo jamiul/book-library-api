@@ -106,7 +106,7 @@ pages)
     *   *Relationship:* Belongs to a Chapter
 
 ### Database Diagram
-![Library Diagram](database\data\library-diagram.png)
+![Library Diagram](database/data/library-diagram.png)
 
 
 ### API Endpoints
